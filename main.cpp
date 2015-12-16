@@ -283,9 +283,9 @@ byteArray wsEncodeMsg(string opcode,string data,string id="0",int type=WS_OP_TXT
 
 string reqClientInfo(int id) {
     stringstream ss;
-    ss << " [[" << id << " " << clientList[id].ip;
+    ss << "[[" << id << " " << clientList[id].ip;
     if(clientList[id].appname.size() > 0) ss << " " << translate_ws_to_s1(clientList[id].appname);
-    ss << "]] ";
+    ss << "]]";
     return ss.str();
 }
 /// MAIN LOOP FUNCTION
@@ -299,26 +299,20 @@ void loadDLL(string path)
     emp.hin = LoadLibrary(path.c_str());
     moduleList.push_back(emp);
     moduleS* modPtr = &moduleList[moduleList.size()-1];
-    //cout << logHeader("OS") << " DLL LOADING : " << path << endl;
     logger << "Loading from : " << path << endl;
     if (modPtr->hin  == NULL) {
         logger << "Load failed" << endl;
-        //if(isLogEnable("OS")) cout << logHeader("OS") << "DLL LOAD failed " << endl;
         return;
     }
     logger << "Found module name : " << ((modf_who)GetProcAddress(modPtr->hin, "who"))() << endl;
-    //cout << "  Found module name : " << ((modf_who)GetProcAddress(modPtr->hin, "who"))() << " (" << path <<")" << endl;
 
     /// load module
     logger << "Initializing ... Requirement as follow : " << endl;
-
-    //cout << "  Module initializing ... Requirement as follow :" << endl;
     vector<string> V = ((modf_load)GetProcAddress(modPtr->hin, "load"))();
     // run V
     logger.startLog("");
     for(int i = 0;i < V.size();i++) {
         logger << V[i] << endl;
-        //cout << "  " << V[i] << endl;
         vector<string> loadArgs = split(V[i]);
         if(loadArgs[0].compare("OPNAME") == 0) {
             for(int j = 1;j < loadArgs.size();j++) {
@@ -348,21 +342,27 @@ void unloadDLL(string name)
 }
 void recv(byteArray data,int i) {
     string str = toString(data);
-    if(str.find("GET /") == 0 && str.find("HTTP/1.1") != string::npos) {
+    if(str.find("GET /") == 0 && str.find("HTTP/1.1") != string::npos) { /// WebServer
         if(str.find("Upgrade: websocket") != string::npos) { // WebSocket handshake
             server.sendTo(wsHandshake(str),i);
-            if(isLogEnable("CONN")) cout << logHeader("CONN") << "Websocket connected with " << reqClientInfo(i) << endl;
+            logger.startLog("CONN");
+            logger << "WebSocket connected with " << reqClientInfo(i) << endl;
+            logger.endLog();
         }
-        else { // HTTP request
+        else { /// HTTP request
             string pageRequest = str.substr(5,str.find("HTTP/1.1")-6);
-            if(isLogEnable("HTTP")) cout << logHeader("HTTP") << reqClientInfo(i) << "HTTP req '" << pageRequest << "'" << endl;
-            if(pageRequest.size() == 0) pageRequest = "index.html"; // default page
+            if(pageRequest.size() == 0) pageRequest = "index.html";
+            logger.startLog("HTTP");
+            logger << "From : " << reqClientInfo(i) << endl;
+            logger.startLog("");
+            logger << "Request page : " << pageRequest << endl;
+
             string fullpath = workingDir;
             fullpath.append("\\");
             fullpath.append(pageRequest);
             string response;
             if(pageRequest.find_last_of('.') == string::npos) {
-                cout << "Invalid resource indication" << endl;
+                logger << "Invalid resource indication" << endl;
                 response = "HTTP/1.1 404 Not Found\r\n";
                 response.append("\r\n");
             }
@@ -372,7 +372,7 @@ void recv(byteArray data,int i) {
                 FILE* f = fopen(fullpath.c_str(),"rb");
                 if(f == NULL) {
                     response = "HTTP/1.1 404 Not Found\r\n\r\n";
-                    if(isLogEnable("HTTP")) cout << logHeader("HTTP") << reqClientInfo(i) << " 404 " << endl;
+                    logger << "Not found (404)" << endl;
                 }
                 else {
                     response = "HTTP/1.1 200 OK\r\n";
@@ -387,20 +387,22 @@ void recv(byteArray data,int i) {
                         c=fgetc(f);
                     }
                     if(ferror(f) != 0) {
-                        if(isLogEnable("HTTP")) cout << logHeader("HTTP") << reqClientInfo(i) << "HTTP response read error : " << ferror(f) << endl;
+                        logger << "File read error : " << ferror(f) << ". Treated as not found (404)" << endl;
                         response = "HTTP/1.1 404 Not Found\r\n";
                     }
                     else {
-                        if(isLogEnable("HTTP")) cout << logHeader("HTTP") << reqClientInfo(i) << "200 OK" << endl;
+                        logger << "File read OK" << endl;
                     }
                     fclose(f);
                 }
             }
             server.sendTo(response,i);
             server.disconnect(i);
+            logger.endLog();
+            logger.endLog();
         }
     }
-    else {
+    else { /// PalmOS
         packetS pData;
         // append data to recvBuffer
         clientList[i].recvBuffer.insert(clientList[i].recvBuffer.end(),data.begin(),data.end());
@@ -505,14 +507,26 @@ void dis(int id)
     }
     clientList.erase(clientList.begin() + id);
 }
+
+void networkHelper_error(string str) {
+    logger.startLog("ERROR");
+    logger << str << endl;
+    logger.endLog();
+}
+void networkHelper_debug(string str) {
+    logger.startLog("SERVERDEBUG");
+    logger << str << endl;
+    logger.endLog();
+}
+
 void startServer()
 {
     server.init();
     int port;
     cout << "Please enter server port : ";
     cin >> port;
-    server.setup(port,run,recv,error,acc,dis);
-    server.setDebugFunc(debug);
+    server.setup(port,run,recv,networkHelper_error,acc,dis);
+    server.setDebugFunc(networkHelper_debug);
     server.start();
     server.runLoop();
 }
@@ -522,9 +536,12 @@ int main(int argc,char** argv)
     SetErrorMode(SEM_NOOPENFILEERRORBOX); // for drives detection
     timestamp = 0;
 
+    /// Logging
     logger.allowLog("MAIN");
     logger.allowLog("DLL");
-    logger.allowLog("PARSE");
+    //logger.allowLog("CONN");
+    logger.allowLog("ERROR");
+    logger.allowLog("SERVERDEBUG");
 
     if(argc >= 1) {
         workingDir = argv[0];

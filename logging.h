@@ -47,7 +47,4 @@ public :
     string logSpace;
 };
 
-/// interface for logging from networkHelper
-void error(string str);
-void debug(string str);
 #endif // LOGGING_H_INCLUDED

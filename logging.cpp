@@ -24,12 +24,6 @@ string logHeader(string module,int leadingSpace) {
     ss << reqTimestamp() << " " << "[" << module << "]" << " ";
     return ss.str();
 }
-void error(string str) {
-    cout << logHeader("ERROR") << str << endl;
-}
-void debug(string str) {
-    cout << logHeader("SERVDBG") << str << endl;
-}
 bool isLogEnable(string module)
 {
     /*if(module.compare("CONN")==0 && !LOG_CONN) return false;

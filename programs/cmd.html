@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CMD</title>
+        <style>
+            html,body {
+                margin:0px;
+                height:100%;
+            }
+        </style>
+    </head>
+    <body>
+        <textarea id="out" style="width:100%; height:90%; background-color:black; color:white;"></textarea>
+        <input id="cmd" type="text" style="width:100%;">
+    </body>
+    <script src="PalmOS.js"></script>
+    <script src="jquery.js"></script>
+    <script>
+        var cmdHistory = new Array();
+        var cmdHistoryNow = 0;
+        $("#cmd").keyup(function(e) {
+            if(e.keyCode == 13) {
+                submitCmd();
+            }
+            else if(e.keyCode == 38) {
+                // re cmd
+                if(cmdHistoryNow > 0) {
+                    cmdHistoryNow--;
+                    document.getElementById("cmd").value = cmdHistory[cmdHistoryNow];
+                }
+            }
+            else if(e.keyCode == 40) {
+                if(cmdHistoryNow < cmdHistory.length-1) {
+                    cmdHistoryNow++;
+                    document.getElementById("cmd").value = cmdHistory[cmdHistoryNow];
+                }
+                else {
+                    document.getElementById("cmd").value = "";
+                }
+            }
+        });
+        var connection;
+        function cmdLog(str)
+        {
+            document.getElementById('out').innerHTML += (str + '\n');
+        }
+        function regisSuccess(data,arg)
+        {
+            cmdLog("App register successful");
+        }
+        function recvLog(data,arg)
+        {
+            cmdLog(data);
+        }
+        function onConOpen() {
+            sendCommand(buildPacket("REGIS","cmd",'1'),regisSuccess,'');
+        }
+        function onConError(err) {
+            console.log('WebSocket Error ' + error);
+        }
+        function onConRecv(e) {
+            var packet = wsDecodeMsg(e.data);
+            console.log(packet);
+            if(runCommand(packet)) return;
+            cmdLog("Data recieved : \n"+packet.data);
+        }
+        function runCmd(cmd)
+        {
+            cmdLog("> "+cmd);
+            document.getElementById("cmd").value = "";
+            var split = cmd.indexOf(' ');
+            var opcode = cmd.substring(0,split);
+            var data = cmd.substring(split+1);
+            if(opcode == "con") {
+                connection = new WebSocket("ws://"+data);
+                connection.onopen = onConOpen;
+                connection.onerror = onConError;
+                connection.onmessage = onConRecv;
+                conn = connection;
+            }
+            else {
+                sendCommand(buildPacket(opcode,data,'1'),recvLog,'');
+                // construct packet
+                /*if(arg.length == 1) sendCommand(buildPacket(arg[0],'','1'),recvLog,'');
+                if(arg.length == 2) sendCommand(buildPacket(arg[0],arg[1],'1'),recvLog,'');
+                if(arg.length == 3) sendCommand(buildPacket(arg[0],arg[1],arg[2]),recvLog,'');*/
+            }
+        }
+        function submitCmd()
+        {
+            var cmd = document.getElementById("cmd").value;
+            cmdHistory.push(cmd);
+            cmdHistoryNow = cmdHistory.length;
+            cmd = cmd.replace(/\$/g,"\n");
+            runCmd(cmd);
+        }
+    </script>
+</html>
