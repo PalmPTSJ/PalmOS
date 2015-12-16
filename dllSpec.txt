@@ -1,0 +1,7 @@
+=== PalmOS module DLL ===
+string who() // Name of this module
+string version() // Version
+packet exec(packet P) // execute packet P , return packet to send back
+vector<packet> poll() // poll function (if requested by module) every determined ticks
+vector<string> load() // load the module , send command list back
+void unload() // unload the module , free/clear everything

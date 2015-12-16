@@ -1,0 +1,15 @@
+/// DLL module loading ///
+ServHandler : "DLL LOAD module/file.dll
+Server : "OK"
+Server->load() ... return ["MODULE FILE","FLAG FLAG_DRIVECHANGE","POLL 10"]
+[Server register modules / flags / poll func]
+
+
+/// SOCKET HANDLING
+
+App -> Server : "SOCKET|CREATECONNECTSEND ..."
+Server -> socket.dll -> exec("SOCKET|CREATECONNECTSEND ...",AppID) : OK
+Server -> App : "OK"
+Server -> socket.dll -> poll() : void
+... socket.dll received a message ...
+Server -> socket.dll -> poll() : "RELAY|AppID|SOCKET|1|RECV|...

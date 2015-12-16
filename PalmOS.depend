@@ -1,0 +1,63 @@
+# depslib dependency file v1.0
+1450196398 source:d:\palm\c++\palmos\main.cpp
+	"network_core.h"
+	"network_server.h"
+	"network_client.h"
+	"stringUtil.h"
+	"logging.h"
+	<bits/stdc++.h>
+	<windows.h>
+	<Psapi.h>
+
+1418990232 d:\palm\c++\palmos\network_core.h
+	<stdio.h>
+	<winsock2.h>
+	<windows.h>
+	<string>
+	<iostream>
+	<vector>
+
+1421256916 d:\palm\c++\palmos\network_server.h
+	"network_ext.h"
+
+1412694720 d:\palm\c++\palmos\network_ext.h
+	"network_core.h"
+
+1421306594 d:\palm\c++\palmos\network_client.h
+	"network_ext.h"
+
+1421575674 source:d:\palm\c++\palmos\network_client.cpp
+	"network_client.h"
+
+1421305528 source:d:\palm\c++\palmos\network_core.cpp
+	"network_core.h"
+
+1419174292 source:d:\palm\c++\palmos\network_ext.cpp
+	"network_ext.h"
+
+1419676002 source:d:\palm\c++\palmos\network_server.cpp
+	"network_server.h"
+
+1450158750 d:\palm\c++\palmos\stringutil.h
+	"network_ext.h"
+	<string.h>
+	<tchar.h>
+	<string>
+	<wchar.h>
+	<sstream>
+
+1450158448 source:d:\palm\c++\palmos\stringutil.cpp
+	"stringUtil.h"
+
+1450197066 source:d:\palm\c++\palmos\logging.cpp
+	"logging.h"
+
+1450196834 d:\palm\c++\palmos\logging.h
+	"stringUtil.h"
+	<string>
+	<stdio.h>
+	<sstream>
+	<map>
+	<stack>
+	<iostream>
+
