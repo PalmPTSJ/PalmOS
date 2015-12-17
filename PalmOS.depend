@@ -61,10 +61,10 @@
 	<stack>
 	<iostream>
 
-1450286694 source:d:\palm\c++\github project\palmos\logging.cpp
+1450286810 source:d:\palm\c++\github project\palmos\logging.cpp
 	"logging.h"
 
-1450286590 d:\palm\c++\github project\palmos\logging.h
+1450286858 d:\palm\c++\github project\palmos\logging.h
 	"stringUtil.h"
 	<string>
 	<stdio.h>

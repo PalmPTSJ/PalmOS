@@ -414,10 +414,14 @@ void recv(byteArray data,int i) {
 
             string opcode = pData.opcode;
             wstring decodeMsg = pData.data;
-            if(isLogEnable("PACKET")) cout << logHeader("PACKET") << reqClientInfo(i) << " OP[" << opcode.substr(0,15) << "] PID[" << pData.id << "] DATA[" << translate_ws_to_s1(decodeMsg.substr(0,20)) << "] SIZE[" << decodeMsg.size() << "]" << endl;
+            logger.startLog("PACKET");
+            logger << reqClientInfo(i) << " OP[" << opcode.substr(0,15) << "] PID[" << pData.id << "] DATA[" << translate_ws_to_s1(decodeMsg.substr(0,20)) << "] SIZE[" << decodeMsg.size() << "]" << endl;
+            logger.endLog();
             if(opcode == "CLOS") {
                 int closingCode = int(decodeMsg[0]);
-                if(isLogEnable("PACKET")) cout << logHeader("PACKET",2) << "Close packet " << reqClientInfo(i) << " code " << closingCode << endl;
+                logger.startLog("CONN");
+                logger << "Close packet from " << reqClientInfo(i) << " [Code " << closingCode << "]" << endl;
+                logger.endLog();
                 server.disconnect(i);
             }
             else if(opcode == "DLL") {
@@ -470,16 +474,19 @@ void recv(byteArray data,int i) {
 }
 bool acc(net_ext_sock connector)
 {
-    if(isLogEnable("CONN")) cout << logHeader("CONN") << "Add " << net_getIpFromHandle(connector.sockHandle) << " as id " << clientList.size() << endl;
+    logger.startLog("CONN");
+    logger << "Add " << net_getIpFromHandle(connector.sockHandle) << " as id " << clientList.size() << endl;
     clientS clientData;
     clientData.ip = net_getIpFromHandle(connector.sockHandle);
     clientData.socket_idRunner = 1;
     clientList.push_back(clientData);
+    logger.endLog();
     return true; // accept the connection
 }
 void dis(int id)
 {
-    if(isLogEnable("CONN")) cout << logHeader("CONN") << "Disconnect " << reqClientInfo(id) << endl;
+    logger.startLog("CONN");
+    logger << "Client disconnect : " << reqClientInfo(id);
     // remove flag associate to this , re-id everything
     map<string,vector<int> >::iterator it = clientFlag.begin();
     while(it != clientFlag.end()) {
@@ -498,7 +505,7 @@ void dis(int id)
             it++;
         }
     }
-    // close socket
+    // close socket ( SOCKET module , should delete )
     map<int,net_client_clientClass>::iterator itt = clientList[id].socketList.begin();
     while(itt != clientList[id].socketList.end()) {
         cout << "Force shutdown " << endl;
@@ -506,6 +513,7 @@ void dis(int id)
         itt++;
     }
     clientList.erase(clientList.begin() + id);
+    logger.endLog();
 }
 
 void networkHelper_error(string str) {
@@ -539,9 +547,9 @@ int main(int argc,char** argv)
     /// Logging
     logger.allowLog("MAIN");
     logger.allowLog("DLL");
-    //logger.allowLog("CONN");
     logger.allowLog("ERROR");
-    logger.allowLog("SERVERDEBUG");
+    logger.allowLog("CONN");
+
 
     if(argc >= 1) {
         workingDir = argv[0];
